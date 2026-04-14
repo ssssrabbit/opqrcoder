@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OPQRcoder — 画像を埋め込めるQRコードジェネレーター</title>
+  <meta name="description"
+    content="OPQRcoderは、画像をQRコードの内部に隠せるiOSアプリです。スキャンも完全対応、見た目も美しい。" />
+  <style>
+    :root {
+      --bg: #0d0d0d;
+      --surface: #1a1a1a;
+      --border: #2a2a2a;
+      --accent: #4f8ef7;
+      --accent2: #a78bfa;
+      --text: #e8e8e8;
+      --muted: #888;
+      --radius: 16px;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    /* ── Nav ── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 5%;
+      height: 60px;
+      background: rgba(13, 13, 13, .85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-logo {
+      font-weight: 700;
+      font-size: 1.1rem;
+      letter-spacing: -.5px;
+    }
+
+    .nav-logo span {
+      color: var(--accent);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 28px;
+      font-size: .9rem;
+      color: var(--muted);
+    }
+
+    .nav-links a {
+      color: var(--muted);
+    }
+
+    .nav-links a:hover {
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    .btn-appstore {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--text);
+      color: #000;
+      padding: 8px 18px;
+      border-radius: 8px;
+      font-size: .85rem;
+      font-weight: 600;
+    }
+
+    .btn-appstore:hover {
+      opacity: .85;
+      text-decoration: none;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      text-align: center;
+      padding: 100px 5% 80px;
+      background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(79, 142, 247, .18) 0%, transparent 70%);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 14px;
+      background: rgba(79, 142, 247, .15);
+      border: 1px solid rgba(79, 142, 247, .35);
+      border-radius: 999px;
+      font-size: .78rem;
+      color: var(--accent);
+      letter-spacing: .5px;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+
+    h1 {
+      font-size: clamp(2.2rem, 5vw, 3.6rem);
+      font-weight: 800;
+      letter-spacing: -1.5px;
+      line-height: 1.15;
+      margin-bottom: 20px;
+    }
+
+    h1 em {
+      font-style: normal;
+      color: var(--accent);
+    }
+
+    .hero-sub {
+      max-width: 560px;
+      margin: 0 auto 40px;
+      color: var(--muted);
+      font-size: 1.1rem;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 14px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--accent);
+      color: #fff;
+      padding: 14px 28px;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .btn-primary:hover {
+      opacity: .88;
+      text-decoration: none;
+    }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 14px 28px;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 500;
+    }
+
+    .btn-secondary:hover {
+      background: var(--surface);
+      text-decoration: none;
+    }
+
+    /* ── Screenshot strip ── */
+    .screenshots {
+      padding: 60px 2%;
+      overflow-x: auto;
+    }
+
+    .screenshots-inner {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .screenshot-frame {
+      flex: 0 0 220px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 32px;
+      overflow: hidden;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, .5);
+    }
+
+    .screenshot-inner {
+      aspect-ratio: 9/19.5;
+      background: var(--surface);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      color: var(--muted);
+      font-size: .8rem;
+      text-align: center;
+      padding: 0px;
+    }
+
+    .screenshot-icon {
+      font-size: 2.4rem;
+      opacity: .4;
+      display: none;
+    }
+
+    .screenshot-label {
+      font-size: .7rem;
+      background: rgba(255, 255, 255, .06);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 4px 10px;
+      color: var(--muted);
+    }
+
+    /* ── How it works ── */
+    section {
+      padding: 80px 5%;
+    }
+
+    .section-label {
+      font-size: .75rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--accent);
+      margin-bottom: 10px;
+    }
+
+    h2 {
+      font-size: clamp(1.6rem, 3vw, 2.4rem);
+      font-weight: 700;
+      letter-spacing: -.5px;
+      margin-bottom: 16px;
+    }
+
+    .section-sub {
+      color: var(--muted);
+      max-width: 540px;
+      margin-bottom: 48px;
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+    }
+
+    .step {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+    }
+
+    .step-num {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(79, 142, 247, .15);
+      border: 1px solid rgba(79, 142, 247, .3);
+      color: var(--accent);
+      font-weight: 700;
+      font-size: .9rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+
+    .step h3 {
+      font-size: 1rem;
+      margin-bottom: 8px;
+    }
+
+    .step p {
+      font-size: .88rem;
+      color: var(--muted);
+    }
+
+    /* ── Features ── */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+    }
+
+    .feature-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px 28px;
+    }
+
+    .feature-icon {
+      font-size: 1.6rem;
+      margin-bottom: 12px;
+    }
+
+    .feature-card h3 {
+      font-size: 1rem;
+      margin-bottom: 6px;
+    }
+
+    .feature-card p {
+      font-size: .88rem;
+      color: var(--muted);
+    }
+
+    /* ── Divider ── */
+    hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 0 5%;
+    }
+
+    /* ── Privacy Policy ── */
+    #privacy {
+      max-width: 740px;
+      margin: 0 auto;
+    }
+
+    #privacy h2 {
+      margin-bottom: 8px;
+    }
+
+    #privacy .updated {
+      font-size: .82rem;
+      color: var(--muted);
+      margin-bottom: 36px;
+    }
+
+    #privacy h3 {
+      font-size: 1.05rem;
+      margin: 32px 0 8px;
+      color: var(--text);
+    }
+
+    #privacy p,
+    #privacy li {
+      font-size: .92rem;
+      color: var(--muted);
+      line-height: 1.75;
+    }
+
+    #privacy ul {
+      padding-left: 20px;
+      margin: 8px 0;
+    }
+
+    #privacy li {
+      margin-bottom: 4px;
+    }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 40px 5%;
+      border-top: 1px solid var(--border);
+      font-size: .82rem;
+      color: var(--muted);
+    }
+
+    footer a {
+      color: var(--muted);
+    }
+
+    footer a:hover {
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 24px;
+      justify-content: center;
+      margin-bottom: 12px;
+    }
+
+    @media (max-width: 600px) {
+      .nav-links {
+        display: none;
+      }
+
+      .screenshots-inner {
+        flex-wrap: nowrap;
+        justify-content: flex-start;
+      }
+    }
+
+    .screenshot {
+      width: 100%;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Navigation -->
+  <nav>
+    <div class="nav-logo"><span>OPQRcoder</span></div>
+    <div class="nav-links">
+      <a href="#how-it-works">使い方</a>
+      <a href="#features">機能</a>
+      <a href="#privacy">プライバシー</a>
+    </div>
+    <a href="https://apps.apple.com/jp/app/opqrcoder/id6464173069" class="btn-appstore">
+      <svg width="16" height="16" viewBox="0 0 814 1000" fill="currentColor">
+        <path
+          d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.3-164-39.3c-76 0-103.7 40.8-165.9 40.8s-105-37.5-155.5-127.4C46 790.7 0 663 0 541.8c0-207.5 135.4-317.3 268.7-317.3 70.1 0 128.4 46.4 172.5 46.4 42.8 0 109.9-49.1 190.5-49.1 30.5 0 110.7 2.6 173.2 79.4zm-252.5-167.9c31.6-37.5 54.2-89.8 54.2-142.1 0-7.1-.6-14.3-1.9-20.1-51.5 2-112.3 34.4-149.2 75.8-28.5 32.4-55.1 84.7-55.1 138.6 0 8.4 1.3 16.8 1.9 19.4 3.2.6 8.4 1.3 13.6 1.3 45.4 0 102.5-30.4 136.5-72.9z" />
+      </svg>
+      App Storeでダウンロード
+    </a>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="badge">iOS App</div>
+    <h1>QRコードに<br /><em>画像を隠せる</em></h1>
+    <p class="hero-sub">
+      OPQRcoderは、あらゆる画像をQRコードのパディング領域に埋め込みます。
+      スキャンは完全対応、見た目は唯一無二。
+    </p>
+    <div class="hero-actions">
+      <a href="https://apps.apple.com/jp/app/opqrcoder/id6464173069" class="btn-primary">
+        無料でダウンロード
+      </a>
+      <a href="#how-it-works" class="btn-secondary">使い方を見る</a>
+    </div>
+  </section>
+
+  <!-- Screenshots -->
+  <div class="screenshots">
+    <div class="screenshots-inner">
+
+      <div class="screenshot-frame">
+        <div class="screenshot-inner">
+          <div class="screenshot-icon">⌨️</div>
+          <img src="img/screenshot_typing.png" class="screenshot" />
+          <div class="screenshot-label">テキスト入力</div>
+        </div>
+      </div>
+
+      <div class="screenshot-frame">
+        <div class="screenshot-inner">
+          <div class="screenshot-icon">🖼️</div>
+          <img src="img/screenshot_picker.png" class="screenshot" />
+          <div class="screenshot-label">画像を選択</div>
+        </div>
+      </div>
+
+      <div class="screenshot-frame">
+        <div class="screenshot-inner">
+          <div class="screenshot-icon">⚡</div>
+          <img src="img/screenshot_generate.png" class="screenshot" />
+          <div class="screenshot-label">QRコード生成</div>
+        </div>
+      </div>
+
+      <div class="screenshot-frame">
+        <div class="screenshot-inner">
+          <img src="img/screenshot_share.png" class="screenshot" />
+          <div class="screenshot-label">保存・共有</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- How It Works -->
+  <section id="how-it-works">
+    <div class="section-label">使い方</div>
+    <h2>目に見えない魔法</h2>
+    <p class="section-sub">
+      QRコードにはデータ本体のあとに未使用の「パディング」バイトが存在します。
+      OPQRcoderはその領域に画像を書き込みます。スキャナーには見えず、目には見える。
+    </p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h3>テキストを入力</h3>
+        <p>URLや文字列、Wi-Fiパスワード、連絡先など、QRコードにしたい内容を入力します。</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h3>画像を選ぶ</h3>
+        <p>ライブラリから好きな写真を選択。コントラストがはっきりしたシンプルな画像が最も効果的です。</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h3>生成する</h3>
+        <p>OPQRcoderが画像の各ピクセルをQRコードのパディングビットにマッピングし、リアルタイムで描画します。</p>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <h3>保存・共有</h3>
+        <p>高解像度のPNGをカメラロールに保存するか、アプリからそのまま共有できます。</p>
+      </div>
+    </div>
+  </section>
+
+  <hr />
+
+  <!-- Features -->
+  <section id="features">
+    <div class="section-label">機能</div>
+    <h2>必要なものがすべて揃っている</h2>
+    <p class="section-sub">シンプルな操作で、強力な出力を。</p>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🔳</div>
+        <h3>完全スキャン対応</h3>
+        <p>生成されたすべてのコードは正しく読み取れることを確認済み。画像がQRデータを破壊することはありません。</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🎨</div>
+        <h3>どんな画像でもOK</h3>
+        <p>ロゴ、ポートレート、アイコン——フォトライブラリから何でも選んで、コードの中に表示させましょう。</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⚙️</div>
+        <h3>詳細設定</h3>
+        <p>QRバージョン・誤り訂正レベル・マスクパターンを調整して、最適な画像品質を追求できます。</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🇯🇵</div>
+        <h3>日本語対応</h3>
+        <p>Shift-JISエンコーディングで日本語テキストをコンパクトかつ正確にQRコード化します。</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💾</div>
+        <h3>高解像度エクスポート</h3>
+        <p>鮮明なPNG画像を写真アプリに保存、またはAirDrop・メッセージなど任意のアプリで共有できます。</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔒</div>
+        <h3>完全オンデバイス処理</h3>
+        <p>すべての処理はデバイス上で完結。テキストも画像も外部に送信されることはありません。</p>
+      </div>
+    </div>
+  </section>
+
+  <hr />
+
+  <!-- Privacy Policy -->
+  <section>
+    <div id="privacy">
+      <div class="section-label">プライバシーポリシー</div>
+      <h2>プライバシーポリシー</h2>
+      <p class="updated">最終更新日：2026年4月14日</p>
+
+      <h3>概要</h3>
+      <p>
+        OPQRcoder（以下「本アプリ」）は個人が開発・運営しています。
+        本プライバシーポリシーは、本アプリがお客様の情報をどのように扱うかを説明するものです。
+        一言で言えば、<strong>本アプリは個人情報を一切収集せず、外部サーバーへのデータ送信も行いません。</strong>
+      </p>
+
+      <h3>収集するデータ</h3>
+      <p>
+        本アプリは個人を特定できる情報を<strong>収集・保存・送信しません</strong>。具体的には：
+      </p>
+      <ul>
+        <li>QRコードにエンコードするために入力したテキストは、端末上でのみ処理され、保存・送信されることはありません。</li>
+        <li>フォトライブラリから選択した画像は、OPQRコードの生成にのみ使用され、端末外に保存・アップロードされることはありません。</li>
+        <li>本アプリは分析SDK・クラッシュレポートサービス・広告フレームワークを一切使用していません。</li>
+        <li>本アプリはCookieやそれに準ずるトラッキング技術を使用していません。</li>
+      </ul>
+
+      <h3>フォトライブラリへのアクセス</h3>
+      <p>
+        本アプリがフォトライブラリへのアクセスを求めるのは、QRコードに埋め込む画像の選択と、
+        エクスポート時に生成した画像をカメラロールに保存するためだけです。
+        この権限はオプションであり、付与しなくても本アプリを利用できます。
+      </p>
+
+      <h3>アプリ内課金</h3>
+      <p>
+        本アプリがアプリ内課金を提供する場合、すべての取引はAppleのApp Storeを通じて処理されます。
+        開発者が支払い情報を受け取ったり保存したりすることはありません。
+        Appleのプライバシーに関する取り扱いは
+        <a href="https://www.apple.com/jp/legal/privacy/" target="_blank" rel="noopener">Appleのプライバシーポリシー</a>に準じます。
+      </p>
+
+      <h3>第三者サービス</h3>
+      <p>
+        本アプリは分析・広告・データ収集を目的とした第三者SDKを一切組み込んでいません。
+        第三者へのデータ提供は行いません。
+      </p>
+
+      <h3>お子様のプライバシー</h3>
+      <p>
+        本アプリは13歳未満のお子様から意図的に情報を収集することはありません。
+        個人情報を一切収集していないため、すべての年齢層に安全にご利用いただけます。
+      </p>
+
+      <h3>ポリシーの変更</h3>
+      <p>
+        本プライバシーポリシーを変更する場合は、このページに最新版を掲載し「最終更新日」を更新します。
+        変更後に本アプリを継続してご利用いただくことで、変更後のポリシーに同意したものとみなします。
+      </p>
+
+      <h3>お問い合わせ</h3>
+      <p>
+        本プライバシーポリシーに関するご質問は、<b>opqrcode@gmail.com</b> までご連絡ください。
+      </p>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-links">
+      <a href="#">ホーム</a>
+      <a href="#how-it-works">使い方</a>
+      <a href="#features">機能</a>
+      <a href="#privacy">プライバシーポリシー</a>
+    </div>
+    <p>&copy; 2026 OPQRcoder. All rights reserved.</p>
+  </footer>
+
+</body>
+
+</html>
